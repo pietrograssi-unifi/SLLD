@@ -30,6 +30,7 @@ library(broom)       # Tidying model outputs
 library(ggplot2)     # High-fidelity visualizations
 library(dplyr)       # Data manipulation workflows
 library(splines)     # Natural (Restricted) Cubic Splines for non-linear modeling
+library(stringr)
 
 # Ensuring strict computational reproducibility
 set.seed(2026)       
@@ -129,7 +130,7 @@ sil_plot <- fviz_nbclust(res.famd$ind$coord[samp_idx, ], kmeans, method = "silho
 optimal_k <- as.numeric(sil_plot$data$clusters[which.max(sil_plot$data$y)])
 cat("Optimal number of latent clinical phenotypes (K):", optimal_k, "\n")
 
-km_res <- cluster::clara(res.famd$ind$coord, k = optimal_k, samples = 50, sampsize = 1000, pamLike = TRUE)
+km_res <- cluster::clara(res.famd$ind$coord, k = 11, samples = 50, sampsize = 1000, pamLike = TRUE)
 df_imputed[, Phenotype_Cluster := as.factor(km_res$clustering)]
 
 medoid_coords <- km_res$medoids
@@ -264,9 +265,7 @@ p_calib <- ggplot(robust_calibration, aes(x = Predicted_Mean_Robust, y = Observe
   geom_smooth(method = "lm", se = FALSE, color = "#2c3e50", linetype = "solid") +
   geom_point(size = 4, color = "#e74c3c") +
   theme_minimal(base_size = 14) +
-  labs(title = "Robust 10-Year Model Calibration (Pooled Fine-Gray)",
-       subtitle = "Averaged across m=5 MICE datasets",
-       x = "Robust Predicted 10-Year Probability",
+  labs(x = "Robust Predicted 10-Year Probability",
        y = "Robust Observed 10-Year Cumulative Incidence")
 
 # ==============================================================================
@@ -339,20 +338,27 @@ write.csv(df_cs_results, paste0(out_dir, "/Table3_Etiology_CS_Cox.csv"), row.nam
 # ------------------------------------------------------------------------------
 # FIGURE 1: Cumulative Incidence Function (CIF)
 # ------------------------------------------------------------------------------
-cif_fit <- tidycmprsk::cuminc(Surv(FollowUp_months, Event_Status_Factor) ~ Chemo_flag, data = df_imputed)
+df_imputed[, Treatment_Group := dplyr::case_when(
+  Chemo_flag == "Treated" & Radio_flag == "Treated" ~ "Combined Modality",
+  Chemo_flag == "Treated" & Radio_flag == "Untreated" ~ "Chemo Only",
+  Chemo_flag == "Untreated" & Radio_flag == "Treated" ~ "Radio Only",
+  TRUE ~ "Observation / Other"
+)]
+
+df_imputed$Treatment_Group <- factor(df_imputed$Treatment_Group, 
+                                     levels = c("Observation / Other", "Radio Only", "Chemo Only", "Combined Modality"))
+cif_fit <- tidycmprsk::cuminc(Surv(FollowUp_months, Event_Status_Factor) ~ Treatment_Group, data = df_imputed)
 
 fig1 <- cif_fit %>%
-  ggcuminc(outcome = "1", size = 1.2) + # <-- FIX: L'esito ora è codificato come "1"
+  ggcuminc(outcome = "1", size = 1.2) + 
   add_confidence_interval() +
-  scale_color_manual(values = c("Untreated" = "#2c3e50", "Treated" = "#e74c3c")) +
-  scale_fill_manual(values = c("Untreated" = "#2c3e50", "Treated" = "#e74c3c")) +
+  scale_color_manual(values = c("Observation / Other" = "#7f8c8d", "Radio Only" = "#f39c12", "Chemo Only" = "#2980b9", "Combined Modality" = "#c0392b")) +
+  scale_fill_manual(values = c("Observation / Other" = "#7f8c8d", "Radio Only" = "#f39c12", "Chemo Only" = "#2980b9", "Combined Modality" = "#c0392b")) +
   theme_minimal(base_size = 14) +
-  labs(title = "Cumulative Incidence of Secondary NHL",
-       subtitle = "Fine-Gray Competing Risk Framework (Accounting for Death)",
-       x = "Follow-up Time (Months)", y = "Cumulative Probability") +
+  labs(x = "Follow-up Time (Months)", y = "Cumulative Probability", color = "Primary Therapy", fill = "Primary Therapy") +
   theme(plot.title = element_text(face = "bold"), legend.position = "bottom")
 
-ggsave(paste0(out_dir, "/Figure1_CIF_Trajectories.pdf"), plot = fig1, width = 9, height = 6, dpi = 300)
+ggsave(paste0(out_dir, "/Figure1_CIF_Trajectories.pdf"), plot = fig1, width = 10, height = 6, dpi = 300)
 
 # ------------------------------------------------------------------------------
 # FIGURE 2: Etiology Forest Plot
@@ -362,23 +368,40 @@ df_plot <- df_cs_results[!grepl("Intercept", df_cs_results$Predictor) &
                            df_cs_results$LCI > 0 & 
                            !is.infinite(df_cs_results$HR), ]
 
+df_plot$Predictor <- str_replace_all(df_plot$Predictor, c(
+  "Chemo_flagTreated" = "Chemotherapy",
+  "Radio_flagTreated" = "Radiotherapy",
+  "Stage_advanced1"   = "Advanced Stage (III-IV)",
+  "SexMale"           = "Sex: Male",
+  "RaceNon-Hispanic White" = "Race: White",
+  "RaceNon-Hispanic Black" = "Race: Black",
+  "RaceNon-Hispanic Asian or Pacific Islander" = "Race: Asian/PI",
+  "RaceNon-Hispanic American Indian/Alaska Native" = "Race: Native American",
+  "ns\\(Age_continuous, df = 3\\)1" = "Age (Spline Basis 1)",
+  "ns\\(Age_continuous, df = 3\\)2" = "Age (Spline Basis 2)",
+  "ns\\(Age_continuous, df = 3\\)3" = "Age (Spline Basis 3)",
+  ":" = " × "
+))
+
 fig2 <- ggplot(df_plot, aes(x = HR, y = reorder(Predictor, HR))) +
   geom_vline(xintercept = 1, linetype = "dashed", color = "red") +
   geom_point(size = 3, color = "#2c3e50") +
   geom_errorbarh(aes(xmin = LCI, xmax = UCI), height = 0.2, color = "#2c3e50") +
-  scale_x_log10() + theme_minimal() +
-  labs(title = "Predictors of Mutagenic Clonal Evolution (Cause-Specific Cox)",
-       x = "Hazard Ratio (Log Scale) -> Favors Late-Onset Evolution", y = "")
-ggsave(paste0(out_dir, "/Figure2_Etiology_ForestPlot.pdf"), plot = fig2, width = 8, height = 6)
-
+  scale_x_log10() + 
+  theme_minimal(base_size = 14) +
+  labs(x = "Hazard Ratio (Log Scale) -> Favors Late-Onset Evolution", y = NULL, title = NULL)
+ggsave(paste0(out_dir, "/Figure2_Etiology_ForestPlot.pdf"), plot = fig2, width = 9, height = 7)
 # ------------------------------------------------------------------------------
 # FIGURE 3: Optimal K Silhouette & FAMD Clusters
 # ------------------------------------------------------------------------------
-fig3_A <- sil_plot + theme_minimal() + labs(title = "Optimal K Extraction (Silhouette Statistic)")
+fig3_A <- sil_plot + 
+  theme_minimal() + 
+  labs(title = NULL, subtitle = NULL)
 ggsave(paste0(out_dir, "/Figure3A_Silhouette_Optimal_K.pdf"), plot = fig3_A, width = 7, height = 5)
 
 fig3_B <- fviz_cluster(km_res, data = res.famd$ind$coord, geom = "point", ellipse.type = "convex", 
-                       ggtheme = theme_minimal(), main = paste("Latent Clinical Phenotypes (K =", optimal_k, ")"))
+                       ggtheme = theme_minimal()) +
+  labs(title = NULL, subtitle = NULL, color = "Cluster", fill = "Cluster", shape = "Cluster")
 ggsave(paste0(out_dir, "/Figure3B_Latent_Clusters.pdf"), plot = fig3_B, width = 8, height = 6)
 
 # ------------------------------------------------------------------------------
@@ -396,10 +419,14 @@ zph_plot_obj <- cox.zph(zph_plot_model)
 stage_var_name <- rownames(zph_plot_obj$table)[grep("Stage", rownames(zph_plot_obj$table))]
 
 if(length(stage_var_name) > 0) {
-  plot(zph_plot_obj, var = stage_var_name[1], main = "Schoenfeld Residuals: Advanced Stage") 
+  plot(zph_plot_obj, var = stage_var_name[1], 
+       ylab = "Schoenfeld Residuals for Advanced Stage",
+       xlab = "Follow-up Time (Months)") 
   abline(h = 0, col = "red", lty = 2)
 } else {
-  plot(zph_plot_obj, var = 1, main = "Schoenfeld Residuals (Fallback variable)")
+  plot(zph_plot_obj, var = 1, 
+       ylab = "Schoenfeld Residuals for Advanced Stage", 
+       xlab = "Follow-up Time (Months)")
   abline(h = 0, col = "red", lty = 2)
 }
 
@@ -412,3 +439,20 @@ ggsave(paste0(out_dir, "/Figure5_Calibration_Plot.pdf"), plot = p_calib, width =
 
 cat("\n[SUCCESS] All manuscript outputs saved to directory.\n")
 # ==============================================================================
+
+cat("SEER Raw Total Rows:", nrow(dt), "\n")
+cat("Primary HL only:", length(id_hl_patients), "\n")
+cat("Missing Follow-up dropped:", sum(is.na(hl_baseline$`Survival months`)), "\n")
+
+# Creiamo una variabile temporanea per isolare il Cluster 9
+df_imputed[, Is_Cluster_9 := ifelse(Phenotype_Cluster == 9, "Cluster 9", "Other Clusters")]
+
+# Generiamo una tabella riassuntiva per vedere cosa rende unico il Cluster 9
+library(gtsummary)
+tbl_cluster9 <- tbl_summary(
+  df_imputed[, .(Age_continuous, Chemo_flag, Radio_flag, Stage_advanced, Sex, Race, Is_Cluster_9)],
+  by = Is_Cluster_9,
+  statistic = list(all_continuous() ~ "{mean} ({sd})", all_categorical() ~ "{p}%")
+)
+print(tbl_cluster9)
+

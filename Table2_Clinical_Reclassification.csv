@@ -1,0 +1,5 @@
+"True_Clinical_Label","Predicted_Genomic_Label","Freq"
+"ABC_Aggressive","Aggressive",39
+"GCB_Indolent","Aggressive",9
+"ABC_Aggressive","Indolent",9
+"GCB_Indolent","Indolent",42

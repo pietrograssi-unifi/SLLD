@@ -1,0 +1,573 @@
+\documentclass[a4paper,11pt,twocolumn]{article}
+
+% — Core Typography & Formatting —
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{microtype}
+\usepackage{geometry}
+\usepackage{parskip}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{lineno}
+
+
+% — Mathematics —
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{dsfont}
+
+
+% — Tables, Figures & Graphics —
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{siunitx}
+\usepackage{tikz}
+\usetikzlibrary{positioning, fit, arrows.meta, shapes.geometric, backgrounds, calc}
+
+% — Color & Hyperlinks Settings —
+\definecolor{darkblue}{rgb}{0.0, 0.0, 0.55}
+\usepackage[colorlinks=true, allcolors=darkblue, urlcolor=darkblue]{hyperref}
+
+% — Citations & Referencing —
+\usepackage{csquotes}
+\usepackage[numbers, square, sort&compress]{natbib}
+\usepackage{authblk}
+\usepackage{orcidlink}
+
+% — Layout Configuration —
+\geometry{
+	top=20mm,
+	bottom=20mm,
+	left=15mm,
+	right=15mm,
+	columnsep=6mm
+}
+
+\sisetup{
+	group-separator = {.},
+	output-decimal-marker = {,},
+	detect-all
+}
+
+\captionsetup{font=small, labelfont={bf,color=darkblue}}
+
+% — Section Formatting —
+\titleformat{\section}{\normalfont\large\bfseries\color{darkblue}}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{1em}{}
+\titleformat{\paragraph}[runin]{\normalfont\normalsize\bfseries}{}{0em}{}[.]
+\titlespacing*{\section}{0pt}{1.5ex plus 1ex minus .2ex}{1ex plus .2ex}
+\titlespacing*{\subsection}{0pt}{1.2ex plus 1ex minus .2ex}{0.8ex plus .2ex}
+
+% ==============================================================================
+% TITLE & AUTHOR BLOCK
+% ==============================================================================
+\title{The Broken Shield of European Palliative Care: Evidence from Synthetic Counterfactuals on Financial Toxicity and Informal Care}
+\date{\today}
+
+\begin{document}
+	
+	\twocolumn[
+	\begin{@twocolumnfalse}
+		\begin{center}
+			\vspace*{-0.5cm}
+			{\Large \textbf{Decoding Secondary Lymphomas: Integrating Macro-Epidemiological Models and Micro-Genomic Signatures to Disentangle Mutagenesis from Misdiagnosis}}
+			
+			\vspace{0.8cm}
+			
+			{\small 
+				\textbf{Pietro Grassi}\textsuperscript{1} \orcidlink{0009-0006-5569-4398},
+				\textbf{Elena Bariletti}\textsuperscript{2} \orcidlink{0009-0001-4812-6652}
+			}
+			
+			\vspace{0.3cm}
+			
+			{\footnotesize 
+				\textit{\textsuperscript{1}Honours Student of Data Science at Sant'Anna School of Advanced Studies, Pisa, Italy} \\
+				\textit{\textsuperscript{2}Honours Student of Biotechnology at Sant'Anna School of Advanced Studies, Pisa, Italy} \\
+			}
+			
+			\vspace{0.8cm}
+			
+			\begin{minipage}{0.88\textwidth}
+				\small \textbf{Summary}
+				
+				\vspace{0.2cm}
+				
+				While secondary Non-Hodgkin Lymphoma (sNHL) following Hodgkin Lymphoma was historically attributed solely to iatrogenic mutagenesis, contemporary hematopathology recognizes a complex triad involving shared clonal evolution and diagnostic blind spots. However, the population-level magnitude of initial molecular misdiagnosis remains critically under-quantified. We developed a dual-scale computational framework to disentangle treatment-induced mutagenesis from occult aggressiveness. At the macro-epidemiological level, competing-risk survival architectures applied to the SEER registry ($N=\num{45530}$) revealed that baseline clinical heterogeneity outweighs systemic therapeutic exposure as the primary etiological driver of early sNHL. Concurrently, utilizing nested Sure Independence Screening and Elastic Net penalization on independent transcriptomic cohorts from GEO (GSE31312, $N=\num{498}$), we isolated a stable 70-gene signature. This signature robustly distinguished indolent from aggressive phenotypes (external validation $\operatorname{AUC} = 0.997$), revealing that 17.6\% of clinically indolent cases harbored occult aggressive transcriptomic machinery. Consequently, a substantial proportion of rapid-onset sNHL represents the unmasking of pre-existing aggressive clones.
+				
+				\vspace{0.5cm}
+				\noindent \textbf{Keywords:} Secondary Non-Hodgkin Lymphoma; Competing Risks; Transcriptomics; Misdiagnosis.
+				\vspace{0.5cm}
+				
+				\noindent \textbf{Statements and Declarations:} The authors declare no conflict of interest.
+				\vspace{0.5cm}
+				
+				\noindent \textbf{Funding:}  The authors received no external funding.
+			\end{minipage}
+		\end{center}
+		\vspace{0.8cm}
+		\hrule
+		\vspace{0.8cm}
+	\end{@twocolumnfalse}
+	]
+	
+	% ==============================================================================
+	% MAIN MANUSCRIPT
+	% ==============================================================================
+	
+\section{Introduction}
+	
+The modern therapeutic landscape of primary Hodgkin Lymphoma (HL) represents one of the most remarkable triumphs in hematologic oncology, with long-term survival rates now exceeding 80\% across demographics \cite{Ansell2015, Schaapveld2015}. However, this extension in life expectancy has unveiled a competing risk of severe magnitude: the development of secondary malignancies. Among these, secondary Non-Hodgkin Lymphomas (sNHL) impose a high mortality burden—with 5-year overall survival rates plummeting to approximately 35-44\%—often presenting with advanced clinical features, marked chemoresistance, and dismal trajectories \cite{Eichenauer2021}.
+
+Today, we conceptualize the emergence of sNHL post-HL through a pathogenetic complex: initial misdiagnosis and shared clonal evolution \cite{Eberle2011}, and iatrogenic immunosuppression combined with mutagenesis \cite{Schaapveld2015}. While the latter genotoxic mechanism has historically dominated clinical guidelines \cite{Eichenauer2021}, modern molecular pathology increasingly implicates occult clonal relationships and diagnostic blind spots \cite{Eberle2011} as equally critical drivers. Epidemiological registries frequently default to categorizing these subsequent events under broad administrative umbrellas—such as ``therapy-related neoplasms''—based predominantly on temporal sequence rather than distinct molecular etiology \cite{Alaggio2022, Morton2013}. We argue that this rigid macroscopic categorization inadvertently confounds early diagnostic failure and occult clonal evolution with true delayed genotoxic mutagenesis.
+
+Standard diagnostic protocols, which rely predominantly on morphological evaluation and targeted immunohistochemistry, inherently suffer from spatial limitations and sampling bias \cite{Swerdlow2016, Chapuy2018}. Consequently, they are often ill-equipped to capture the intra-tumor heterogeneity and transitional transcriptomic states that characterize early clonal divergence \cite{Sehn2021, Bera2019}. While clinicians acknowledge this diagnostic ``blind spot'', large-scale survival models and population registries have historically lacked the molecular granularity to adjust for it \cite{Penberthy2024}. This lack of genomic integration leads to suboptimal initial therapeutic stratification and the eventual, seemingly abrupt ``emergence'' of a supposedly secondary, treatment-refractory NHL.
+
+Disentangling iatrogenic mutagenesis from molecular misdiagnosis requires an analytical architecture capable of bridging epidemiological trends with high-resolution molecular granularity. Historically, methodological silos have prevented this synthesis: population-level registries only (e.g., the Surveillance, Epidemiology, and End Results, SEER) lack high-dimensional transcriptomic resolution, whereas specialized omics cohorts (e.g., Gene Expression Omnibus, GEO, and The Cancer Genome Atlas, TCGA) lack the longitudinal statistical power required to robustly model competing mortality risks \cite{Penberthy2024}.
+
+In this study, we propose a dual-scale computational framework to resolve this etiological ambiguity. At the macro-epidemiological level, we deploy competing risk survival architectures (Fine-Gray and Cause-Specific Cox models) alongside unsupervised latent phenotyping on the SEER registry to delineate the clinical trajectories of sNHL. Concurrently, at the micro-genomic level, we apply stability-selected, ultra-high-dimensional penalized regression (Nested Sure Independece Screening, SIS, and Elastic Net) to independent microarray cohorts to isolate a stable transcriptomic signature indicative of occult aggressiveness. By integrating population-level incidence probabilities with micro-environmental transcriptomic dynamics, we aim to reclassify the etiology of secondary lymphomas, highlighting that a measurable proportion of these malignancies stems from initial diagnostic failure rather than delayed mutagenesis.
+
+\section{Theoretical Framework}
+
+Historically, the pathogenesis of therapy-related neoplasms following HL was presumed to rely exclusively on the direct mutagenic effects of antineoplastic regimens, as alkylating agents and radiotherapy induce direct DNA double-strand breaks. However, landmark population studies have challenged this dogma for lymphoid malignancies; rather than a strict dose-dependent association with specific cytotoxic agents, the elevated risk of sNHL strongly implicates profound iatrogenic and disease-intrinsic immunosuppression \cite{Schaapveld2015}. Systemic therapeutic interventions for primary HL frequently induce profound and prolonged T-cell depletion. This sustained impairment of cytotoxic immune surveillance creates a permissive microenvironment for the unchecked proliferation of latent Epstein-Barr Virus (EBV)-driven B-cells. Classified formally under iatrogenic immunodeficiency-associated lymphoproliferative disorders, this chronic antigenic drive can culminate in the emergence of aggressive secondary lymphomas after a protracted latency period \cite{Alaggio2022}.
+
+While this mechanism elegantly explains late-onset sNHL, it fundamentally fails to account for rapid-onset cases. For these early events, the frontier of molecular pathology points toward a ``shared origin'': advanced single-cell microdissection and sequencing of IgHV gene rearrangements have definitively demonstrated that, in a subset of patients, the Hodgkin Reed-Sternberg cells and the subsequent NHL blasts share the exact same clonal rearrangement \cite{Kuppers2009}. In these instances, the secondary NHL is not a \textit{de novo} iatrogenic tumor, but the delayed aberrant differentiation or re-emergence of the original germinal center B-cell progenitor.
+
+Finally, integrating the ``shared origin'' hypothesis with the inherent spatial limitations of morphological evaluation highlights the role of misdiagnosis: standard H\&E staining and targeted immunohistochemistry are highly vulnerable to sampling bias \cite{Swerdlow2016, Bera2019}. Retrospective central pathology reviews reveal that many early-onset sNHLs were either misdiagnosed initially or represent transitional entities. The existence of ``grey zone lymphomas''—exhibiting overlapping features between classical HL and Primary Mediastinal B-Cell Lymphoma—and the known propensity of Nodular Lymphocyte-Predominant HL to transform into Diffuse Large B-Cell Lymphoma, underscore these diagnostic blind spots \cite{Eberle2011, Swerdlow2016, Alaggio2022}. If an indolent or ambiguous lymphoma already harbors an occult aggressive transcriptomic machinery, its rapid ``emergence'' as a refractory sNHL is merely the clinical unmasking of a misclassified primary sub-clone.
+	
+\section{Methods}
+
+A comprehensive mathematical formalization of the algorithms employed, including explicit algorithmic deviations from standard modeling techniques, is provided in Appendix \ref{app:methodology}.
+
+\subsection{SEER Registry Analysis}
+We queried the SEER database to extract a primary cohort of patients diagnosed with HL. Within this cohort, sNHL was defined as a subsequent primary malignancy. To reflect the clinical reality of survivorship, the follow-up time was calculated from the date of initial HL diagnosis to the onset of sNHL, death from any cause (competing event), or last follow-up (right-censoring).
+
+Analyzing population-level trajectories in cohorts of HL survivors introduces severe survival analysis challenges. Patients treated for HL face a substantial risk of non-cancer-related mortality, primarily cardiovascular events \cite{Aleman2003}. In this context, standard Kaplan-Meier estimators and Cox Proportional Hazards models violate the assumption of independent right-censoring. Treating death as a standard censoring event mathematically forces the assumption that a deceased patient could still develop sNHL if they had lived, therefore overestimating the true cumulative incidence of the secondary malignancy \cite{Austin2016}.
+
+To resolve this mathematical artifact, our framework deployed a dual-model competing risk architecture. For predictive incidence modeling, we directly computed the 10-year cumulative incidence function (CIF) using Fine-Gray subdistribution hazard models \cite{Fine1999}. This approach properly maintains individuals who experience competing events (death) within the risk set, weighted by their probability of surviving without the event of interest. Age was modeled continuously via restricted cubic splines (3 degrees of freedom) to capture non-linear hazard trajectories, while therapeutic interventions and advanced stage were treated as categorical predictors. Conversely, to address the purely etiological question of whether therapeutic interventions directly increase the biological hazard of lymphomagenesis, we fitted Cause-Specific Cox models \cite{Andersen2012}, treating competing deaths as independent censoring to isolate the pure mutagenic signal. Model robustness was evaluated post-estimation: proportional hazards assumptions were verified via Schoenfeld residuals, and prognostic accuracy was assessed through a decile-by-decile 10-year calibration analysis.
+
+To address non-random missingness in staging and treatment data without introducing survival bias, we utilized Multiple Imputation by Chained Equations (MICE). Crucially, the Nelson-Aalen cumulative hazard estimator and event status were embedded directly into the imputation process to ensure that true time-to-event dynamics intrinsically informed the imputation geometry \cite{White2009}. Following imputation, we identified unbiased clinical phenotypes via Factor Analysis of Mixed Data (FAMD) computed specifically on six core baseline covariates: continuous age, sex, race, advanced clinical stage, chemotherapy and radiotherapy (dummies for primary therapeutic exposures). The number of latent clusters was selected manually as a trade-off between the Silhouette statistic level and model complexity, mapping patients into distinct ``vulnerability zones'' based on their multi-dimensional profiles.
+
+\subsection{Transcriptomic Signature Discovery}
+The transition from macroscopic incidence to transcriptomic validation requires navigating the curse of dimensionality ($n \ll p$), where the number of transcriptomic features (tens of thousands of genes) vastly exceeds the number of available clinical samples ($<500$). Standard generalized linear models collapse in this regime due to perfect multicollinearity and inflated variance \cite{Hastie2015}.
+
+Working with the primary microarray cohort (GSE31312), we first strictly partitioned the data into an 80\% training set and a 20\% internal hold-out set to prevent data leakage. Missing transcriptomic probes were inferred using a $k$-Nearest Neighbors ($k$-NN) algorithm \cite{Troyanskaya2001}. Crucially, this imputation manifold was computed exclusively within the training set, ensuring the hold-out data remained entirely naive to the training distribution prior to signature evaluation.
+
+To isolate an etiology-defining molecular signature without succumbing to algorithmic overfitting, our methodology leveraged a nested stability selection protocol. We initiated dimensionality reduction via Sure Independence Screening (SIS) \cite{Fan2008}, a marginal correlation-based algorithm mathematically proven to possess the ``sure screening property''—reducing dimensionality asymptotically close to the true sparse model while retaining all critical predictors. To implement stability selection, this screening was embedded and executed across $B=100$ stratified subsampling iterations (randomly drawing 80\% of the samples without replacement) \cite{Meinshausen2010}. Features were retained for the core signature only if their selection frequency exceeded a strict 50\% threshold across iterations, isolating features based on recurrence rather than raw coefficient magnitude.
+
+The final predictive model was trained using an Elastic Net penalized regression framework \cite{Zou2005}, mixing Ridge ($L_2$) and Lasso ($L_1$) penalties at exactly $\alpha = 0.5$ to optimally balance feature sparsity with the retention of correlated biological pathways. The signature's diagnostic threshold was subsequently optimized on the internal hold-out set using the Youden Index derived from its Receiver Operating Characteristic (ROC) curve.
+
+To evaluate cross-cohort translational robustness, the trained signature was applied to an independent external dataset (GSE10846). To ensure validity across independent microarray platforms, an orthogonal Empirical Bayes harmonization strategy (ComBat) was applied to neutralize systemic batch effects and isolate true biological variance from cross-study technical noise \cite{Johnson2007}. To preserve complete methodological orthogonality, the GSE31312 training cohort was explicitly designated as the immutable reference batch, projecting the GSE10846 samples strictly into the established training space without altering the original model parameters. Finally, to contextualize the systemic biological shifts driving the extracted signature, Gene Set Enrichment Analysis (GSEA) \cite{Subramanian2005} was performed. By continuously ranking the shared transcriptome based on marginal Pearson correlations, GSEA identified coordinated functional pathway activations distinguishing the aggressive versus indolent phenotypes.
+	
+\section{Results}
+
+\subsection{Macro-Epidemiological Analysis}
+
+The final macro-epidemiological study cohort comprised patients diagnosed with primary HL extracted from the SEER database. Baseline characteristics, stratified by sNHL status and death, are detailed in Table \ref{tab:supp_baseline} (Appendix \ref{app:materials}). Unsupervised latent phenotyping via FAMD initially indicated an optimal $K=19$ via the Silhouette statistic (Figure \ref{fig:clusters}A); however, we strategically selected $K=11$ as a rigorous trade-off to constrain model complexity while preserving clinical interpretability. The topological projection (Figure \ref{fig:clusters}B) illustrates the underlying population structure: only Cluster 9 demonstrates clear spatial isolation. Demographic cross-tabulation reveals that this separation is not stochastic, but driven by a sharp categorical polarization: this outlier cluster exclusively captures a sub-population defined by unknown racial designations (100\% Non-Hispanic Unknown Race), compounded by anomalously low rates of systemic chemotherapy (only 53\% treated, compared to 84\% in the broader cohort). This distinct administrative and therapeutic profile strongly polarizes the first two principal dimensions. In contrast, the remaining 10 latent clusters form a dense, overlapping central manifold. Rather than an algorithmic artifact, this dense overlap accurately maps the homogeneous ``clinical continuum'' of the typical HL demographic, where slight multidimensional variations in age, stage, and therapy define subtle, progressively overlapping vulnerability zones for secondary events.
+
+\begin{figure}[htbp]
+	\centering
+	\begin{minipage}{\columnwidth}
+		\centering
+		\includegraphics[width=\columnwidth]{Figure3A_Silhouette_Optimal_K.pdf}
+		\caption*{A: Optimal K Extraction}
+	\end{minipage}\hfill
+	\vspace{1cm}
+	\begin{minipage}{\columnwidth}
+		\centering
+		\includegraphics[width=\columnwidth]{Figure3B_Latent_Clusters.pdf}
+		\caption*{B: Latent Clinical Phenotypes}
+	\end{minipage}
+	\caption{Unsupervised clinical phenotyping. (A) Silhouette statistic identifying $K=19$ as the optimal number of clusters. (B) FAMD topological projection of the latent phenotypes.}
+	\label{fig:clusters}
+\end{figure}
+
+Evaluating the long-term cumulative incidence of sNHL, while strictly accounting for the competing mortality risk, demonstrated a progressive divergence based on the specific modality of initial therapeutic exposure (Figure \ref{fig:cif}). Interestingly, the cohort receiving combined modality therapy (Chemotherapy + Radiotherapy) maintained the lowest cumulative probability of sNHL across the vast majority of the follow-up period. Patients receiving isolated systemic radioterapy or chemotherapy, or observation-only regimens demonstrated intermediate and overlapping incidence rates.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{Figure1_CIF_Trajectories.pdf}
+	\caption{Cumulative Incidence Function (CIF) of secondary NHL, stratified by primary therapeutic modality. Curves are estimated utilizing the Fine-Gray competing risk framework.}
+	\label{fig:cif}
+\end{figure}
+
+The Fine-Gray subdistribution hazard (sHR) models (Table \ref{tab:finegray}) revealed that advanced stage and age—modeled via restricted cubic splines—were primary prognostic drivers of clinical incidence. Notably, model calibration at 10 years (Figure \ref{fig:calibration}) showed a high degree of mathematical agreement between predicted and observed probabilities ($\operatorname{Slope}\approx1$). This calibration, averaged across all $m=5$ imputed datasets, validates the model's prognostic utility under missing-data uncertainty.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Pooled Fine-Gray Subdistribution Hazard Ratios for Secondary NHL (Predictive Model).}
+	\label{tab:finegray}
+	\resizebox{\columnwidth}{!}{
+		\begin{tabular}{lccc}
+			\toprule
+			\textbf{Predictor} & \textbf{sHR} & \textbf{95\% CI} & \textbf{p-value} \\ 
+			\midrule
+			Chemotherapy (Treated vs Untreated) & 0.43 & 0.04 -- 4.82 & 0.691 \\
+			Radiation (Treated vs Untreated) & 0.85 & 0.70 -- 1.04 & 0.493 \\
+			Stage (Advanced vs Early) & 2.12 & 1.65 -- 2.72 & <0.001 \\
+			Age (Spline 1) & 11.84 & 3.12 -- 44.88 & 0.335 \\
+			\bottomrule
+		\end{tabular}
+	}
+\end{table}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{Figure5_Calibration_Plot.pdf}
+	\caption{10-Year Model Calibration. Predicted mean probabilities versus observed cumulative incidence across risk deciles, averaged across $m=5$ imputed datasets.}
+	\label{fig:calibration}
+\end{figure}
+
+To disentangle the pure mutagenic effect from independent prognostic risk factors, the Cause-Specific Cox model (Table \ref{tab:cscox}) isolated the direct hazard of sNHL evolution. The corresponding forest plot (Figure \ref{fig:forest}) visualizes these etiological drivers. Crucially, the main effect of systemic chemotherapy did not reach statistical significance (wide confidence intervals crossing the null), contradicting the classical assumption of its direct, universal mutagenic role in early-onset cases. Instead, advanced primary stage and non-linear age dynamics emerged as the true etiological drivers. This profound influence of baseline clinical features over systemic iatrogenic exposure strongly reinforces the hypothesis that pre-existing tumor biology (occult aggressiveness), rather than delayed therapeutic mutagenesis, dictates rapid clonal emergence.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Pooled Cause-Specific Hazard Ratios (Etiological Drivers).}
+	\label{tab:cscox}
+	\resizebox{\columnwidth}{!}{
+		\begin{tabular}{lccc}
+			\toprule
+			\textbf{Predictor} & \textbf{csHR} & \textbf{95\% CI} & \textbf{p-value} \\ 
+			\midrule
+			Chemotherapy (Treated vs Untreated) & 0.60 & 0.03 -- 10.32 & 0.725 \\
+			Radiation (Treated vs Untreated) & 0.68 & 0.56 -- 0.82 & 0.003 \\
+			Stage (Advanced vs Early) & 2.54 & 1.88 -- 3.43 & <0.001 \\
+			\bottomrule
+		\end{tabular}
+	}
+\end{table}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{Figure2_Etiology_ForestPlot.pdf}
+	\caption{Forest Plot of Etiological Drivers. Cause-Specific Cox modeling isolates the direct hazard of mutagenic clonal evolution.}
+	\label{fig:forest}
+\end{figure}
+
+\subsection{Micro-Genomic Signature and Molecular Reclassification}
+
+Transitioning to the molecular level, the Nested SIS and stability selection pipeline isolated a core signature of 70 genes. Key biomarkers such as ISL2, MME (CD10), and BCL6 demonstrated 100\%, 100\%, and 89\% selection frequency, respectively. Unsupervised dimensionality reduction demonstrated a natural biological separation of aggressive (ABC) versus indolent (GCB) phenotypes based solely on this stable signature (Figure \ref{fig:genomic_separation}). Furthermore, GSEA confirmed the systemic biological shifts distinguishing these phenotypes. By ranking the entire shared transcriptome, GSEA effectively stratified activated and suppressed biological processes into distinct functional hubs. The analysis highlighted a critical dysregulation of cellular machinery: the aggressive phenotype is driven by a marked activation of RNA metabolism (including ribonucleoprotein complex biogenesis, RNA splicing, ribosome biogenesis, and mRNA processing), fueling rapid protein translation and proliferation. Conversely, it exhibits a suppression of extracellular matrix organization and cell-cell adhesion pathways (Figure \ref{fig:pathway}), a hallmark transcriptomic shift that facilitates tissue invasion, architectural disruption, and early clonal dissemination.
+
+\begin{figure}[htbp]
+	\centering
+	\begin{minipage}{\columnwidth}
+		\centering
+		\includegraphics[width=\columnwidth]{Figure1_Unsupervised_PCA.pdf}
+		\caption*{A: Unsupervised PCA}
+		\vspace{0.5cm}
+	\end{minipage}
+	\begin{minipage}{\columnwidth}
+		\centering
+		\includegraphics[width=\columnwidth]{Figure2_Genomic_Heatmap.pdf}
+		\caption*{B: Hierarchical Clustering}
+		\vspace{0.5cm}
+	\end{minipage}
+	\caption{Unsupervised transcriptomic separation based on the 70-gene stable signature. (A) PCA demonstrating natural variance mapping between ABC (aggressive) and GCB (indolent) phenotypes. (B) Hierarchical clustering heatmap of the core signature.}
+	\label{fig:genomic_separation}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{Figure4_Pathway_Enrichment.pdf}
+	\caption{Gene Set Enrichment Analysis. Dotplot highlighting the systemic biological shifts distinguishing the occult aggressive phenotype from the indolent baseline, stratified by activated (positive) and suppressed (negative) transcriptomic pathways.}
+	\label{fig:pathway}
+\end{figure}
+
+The diagnostic robustness of this signature was first confirmed on the internal hold-out set, where it achieved high discriminative capacity ($\operatorname{AUC}=0.897$) (Figure \ref{fig:roc_curves}A). More crucially, external validation on the independent GSE10846 cohort—post-ComBat orthogonal harmonization to mitigate microarray batch effects—yielded robust diagnostic performance ($\operatorname{AUC}=0.997$) (Figure \ref{fig:roc_curves}B). This confirms the universal stability of the signature across different platforms and clinical environments.
+
+\begin{figure}[htbp]
+	\centering
+	\begin{minipage}{\columnwidth}
+		\centering
+		\includegraphics[width=\columnwidth]{Figure3_ROC_Curve.pdf}
+		\caption*{A: Internal Validation (Hold-Out, GSE31312)}
+	\end{minipage}
+	\vspace{0.5cm}
+	\begin{minipage}{\columnwidth}
+		\centering
+		\includegraphics[width=\columnwidth]{Figure5_External_Validation_ROC.pdf}
+		\caption*{B: External Validation (GSE10846)}
+	\end{minipage}
+	\caption{Diagnostic performance of the stable genomic signature. (A) Internal validation showcasing the optimal Youden threshold. (B) External validation post-Empirical Bayes (ComBat) harmonization, confirming cross-cohort translational robustness.}
+	\label{fig:roc_curves}
+\end{figure}
+
+The most profound clinical insight emerged from the cross-tabulation of true morphological labels and genomic predictions (Table \ref{tab:reclass}). Within the validation set, 9 patients clinically diagnosed as GCB (Indolent) were genomically reclassified as ABC-like (Aggressive), while 9 aggressive-labeled patients were predicted as indolent.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Genomic Reclassification of Clinical Phenotypes.}
+	\label{tab:reclass}
+	\resizebox{\columnwidth}{!}{
+		\begin{tabular}{lcc}
+			\toprule
+			\textbf{True Clinical Label} & \textbf{Predicted: Aggressive} & \textbf{Predicted: Indolent} \\ 
+			\midrule
+			ABC (Aggressive) & 39 & 9 \\
+			GCB (Indolent) & 9 & 42 \\ 
+			\bottomrule
+		\end{tabular}
+	}
+\end{table}
+
+The 18 discordant cases (18.2\% of the validation sample) highlight the inherent ``blind spot'' of traditional morphological diagnosis. The GCB-to-ABC reclassification supports the existence of an occult aggressive phenotype. This unmasking likely manifests as rapid-onset secondary NHL in epidemiological datasets like SEER, effectively confounding initial diagnostic failure with late-onset iatrogenic mutagenesis.
+	
+\section{Discussion}
+
+\subsection{Reconciling Epidemiology with Molecular Ground Truth}
+We postulated that standard diagnostic protocols suffer from inherent spatiotemporal limitations, often masking early clonal divergence \cite{Sehn2021, Bera2019}. Our unsupervised phenotyping of the SEER cohort visually captures this intricate complexity: rather than rigid and easily separable silos, the latent clinical clusters mapped a profound biological continuum. With the exception of a single outlier subgroup (Cluster 9), the vast majority of the cohort formed an overlapping topological gradient. This spatial overlap confirms that the transition to a high-risk sNHL candidate is dictated by continuous shifts in age and therapeutic intensity, validating our methodological address to abandon categorical age thresholds in favor of non-linear splines.
+
+This macro-epidemiological complexity is mirrored at the micro-genomic level. While the SEER Cause-Specific Cox models demonstrated a statistically significant etiological hazard associated with chemotherapy and radiation, the transcriptomic reclassification on the independent hold-out set (Table \ref{tab:reclass}) revealed a profound discordance: 17.6\% of cases clinically labeled as indolent (GCB-like) harbored the 70-gene transcriptomic machinery of an aggressive (ABC-like) phenotype. The unexpectedly rapid onset of sNHL observed in a subset of the SEER cohort is mathematically compatible with the emergence of these misclassified primary sub-clones. Therefore, what frequently registers as ``early-onset iatrogenic sNHL'' is, in reality, the clinical unmasking of an occult primary Diffuse Large B-Cell Lymphoma or other aggressive transitional state.
+
+\subsection{Biological Insights from the Transcriptomic Signature}
+The robustness of this paradigm shift is anchored in the stability of our genomic signature. The rigorous application of nested SIS within a bootstrap architecture, strictly preceded by orthogonal data partitioning and $k$-NN imputation, circumvented the data leakage prevalent in early microarray studies \cite{Fan2008, Troyanskaya2001}. The consistent extraction of MME (CD10) and BCL6 at the apex of our feature stability ranking serves as an internal biological validation, given their well-documented roles as master regulators of the germinal center phenotype \cite{Scott2014}.
+
+However, the signature also captures critical non-canonical drivers, such as the consistent selection of the long non-coding RNA BBOX1-AS1 and the transcription factor ISL2. Emerging literature highlights that specific lncRNAs operate as critical epigenetic modulators, playing a pivotal role in driving profound chemoresistance and oncogenic signaling plasticity \cite{Peng2020}. Concurrently, as demonstrated by high-resolution molecular profiling in aggressive lymphomas, the establishment of microenvironmental immune evasion frequently precedes the manifestation of distinct, macroscopically visible morphological changes \cite{Chapuy2018}. This gene-level dysregulation is functionally corroborated by our GSEA findings, which revealed a systemic transcriptomic shift—most notably the marked hyper-activation of ribonucleoprotein and ribosome biogenesis and RNA splicing, paired with the profound suppression of cell-cell adhesion and extracellular organization.
+
+\subsection{Limitations}
+First, the SEER registry, while vast, lacks granular therapeutic dose data; we modeled interventions as binary factors and could not assess cumulative dose-response relationships (e.g., ABVD vs. escalated BEACOPP). Consequently, our Cause-Specific Cox estimates represent average marginal effects. Second, our molecular signature was derived and externally validated on historical microarray platforms rather than contemporary RNA-sequencing data. While orthogonal ComBat harmonization proved the signature's universal stability and discriminatory power across independent cohorts (yielding an external AUC of 0.997), translating this exact 70-gene panel into a localized clinical assay will require prospective cross-platform calibration. Lastly, the retrospective nature of both cohorts precludes definitive causal inference, relying instead on high-confidence observational associations.
+
+\subsection{Future Perspectives}
+To bridge the gap between macroscopic population incidence and microscopic transcriptomic signaling, we propose the development of an integrated prediction model functioning as a translational Bayesian Nomogram. While Bayesian updating is a foundational concept in clinical epidemiology \cite{Fagan1975}, its application to fuse population-level competing risk architectures with ultra-high-dimensional genomics is poorly developed. Conceived to eventually be structured and validated in accordance with the rigorous TRIPOD guidelines for clinical prediction models \cite{Moons2015}, a such theoretical framework would operate on probability updating. Specifically, the macroscopic Fine-Gray model provides the \textit{a priori} clinical probability of sNHL development based on baseline age, stage, and therapy. Concurrently, the continuous output of the Elastic Net genomic signature operates as a Likelihood Ratio modifier. By applying Bayes' theorem, the macroscopic baseline clinical risk is mathematically updated by the transcriptomic signal, calculating a personalized \textit{a posteriori} risk. A patient classified clinically as low-risk but harboring an aggressive transcriptomic signature would be formally reclassified at time zero, transitioning the field from reactive epidemiological observation to proactive molecular interception.
+
+\section{Conclusion}
+
+This study links macro-epidemiological competing risk architectures with ultra-high-dimensional transcriptomic screening to quantify the true impact of molecular misdiagnosis in secondary Non-Hodgkin Lymphomas. While the hematological community increasingly acknowledges that the linear paradigm of iatrogenic mutagenesis is biologically incomplete, population-level models have historically failed to isolate this variable. Our cross-scale synthesis empirically shows that a substantial fraction of rapid-onset sNHL—approaching 18\% in our validation cohort—represents the clinical unmasking of an occult, pre-existing aggressive clone rather than a \textit{de novo} mutagenic event.
+
+The identification of a stable, 70-gene transcriptomic signature capable of reclassifying indolent morphological phenotypes into aggressive molecular trajectories carries profound translational implications. It mandates a paradigm shift in initial diagnostic protocols: relying solely on localized, static morphology is insufficient to capture the profound spatial heterogeneity of primary lymphomas. Moving forward, integrating non-invasive molecular tracking, such as circulating tumor DNA (ctDNA) dynamics, alongside AI-augmented spatial transcriptomics, will be critical. Recognizing molecular misdiagnosis as a competing driver of secondary NHL represents a definitive step toward precision hematology, sparing patients the dual burden of initial under-treatment and subsequent refractory disease.
+	
+	\appendix
+	
+	\section*{Declaration of generative AI and AI-assisted technologies in the manuscript preparation process}
+	During the preparation of this work the authors used Gemini 3.1 in order to improve readibility of the text. After using this tool/service, the authors reviewed and edited the content as needed and take full responsibility for the content of the article.
+	
+	\section*{Contributors}
+	All authors conceived and designed the reported study. All authors led the data analysis and contributed to the interpretation of results. All authors drafted the manuscript and reviewed it critically for intellectual content.
+	
+	\bibliographystyle{unsrtnat}
+	\bibliography{Report}
+	
+	\section*{Code Availability Statement}
+	The \texttt{R} code is openly available at \url{https://github.com/pietrograssi-unifi/SLLD}.
+	
+	\newpage
+	
+	\setcounter{table}{0}
+	\setcounter{figure}{0}
+	\renewcommand{\thetable}{A\arabic{table}}
+	\renewcommand{\thefigure}{A\arabic{figure}}
+	
+\section{Supplementary Materials}
+\label{app:materials}
+
+\subsection{Cohort Selection Flowcharts}
+
+To ensure complete methodological transparency in accordance with STROBE and REMARK guidelines, the step-by-step sample selection processes for both the macro-epidemiological and the micro-genomic cohorts are detailed in Figure \ref{fig:flow_seer} and Figure \ref{fig:flow_geo}, respectively.
+
+\subsection{Extended Baseline Characteristics}
+The extended demographic and clinical distribution of the study population is provided in Table \ref{tab:supp_baseline}. The stratification by competing risk endpoints aligns with the primary event statuses utilized in the Fine-Gray and Cause-Specific Cox architectures.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Extended Baseline Characteristics of the SEER Cohort, Stratified by Competing Risk Status.}
+	\label{tab:supp_baseline}
+	\small
+	\resizebox{\columnwidth}{!}{
+		\begin{tabular}{lcccc}
+			\toprule
+			\textbf{Characteristic} & \textbf{Overall} & \textbf{Censored} & \textbf{sNHL} & \textbf{Death} \\ 
+			\midrule
+			Observations & $\num{45530}$ & $\num{34935}$ & $\num{666}$ & $\num{9929}$\\
+			Age (Mean $\pm$ SD) & $40 \pm 19$ & $35 \pm 16$ & $53 \pm 18$ & $58 \pm 20$ \\
+			Follow-up Months (Mean $\pm$ SD) & $107 \pm 81$ & $122 \pm 79$ & $116 \pm 73$ & $54 \pm 62$ \\
+			Chemotherapy (Treated \%) & 83\% & 87\% & 77\% & 71\% \\
+			Radiotherapy (Treated \%) & 29\% & 32\% & 23\% & 18\% \\
+			Advanced Stage (\%) & 34\% & 32\% & 39\% & 41\% \\
+			Male Sex (\%) & 55\% & 53\% & 60\% & 60\% \\ 
+			\bottomrule
+		\end{tabular}
+	}
+\end{table}
+
+\subsection{Statistical Diagnostics: Clustering Stability and Proportional Hazards}
+The proportional hazards assumption for the survival architectures was verified through Schoenfeld residual analysis. Tested systematically across the $m=5$ imputed datasets, no significant structural deviations were observed for the primary predictors ($p > 0.05$). Visual inspection of the scaled Schoenfeld residuals for key etiological drivers, such as advanced stage (Figure \ref{fig:schoenfeld}), confirmed a zero-slope trajectory over the entire 270-month follow-up period, corroborating the temporal validity of the derived hazard estimates.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{Figure4_Schoenfeld_Residuals.pdf}
+	\caption{Schoenfeld Residuals for Advanced Stage. The smoothed fit (solid line) remains consistently parallel to the zero-line (dashed red) across the 270-month follow-up.}
+	\label{fig:schoenfeld}
+\end{figure}
+
+\subsection{Genomic Signature Detail}
+The core stable transcriptomic signature, computationally derived from the Nested SIS and stability selection pipeline, comprises 70 unique features. The top 20 driving biomarkers, strictly ranked by their selection frequency across the $B=100$ bootstrap iterations, are detailed in Table \ref{tab:supp_genes}.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Top 20 Biomarkers by Stability Selection Frequency.}
+	\label{tab:supp_genes}
+	\small
+	\resizebox{\columnwidth}{!}{
+		\begin{tabular}{lc @{\hspace{1cm}} lc}
+			\toprule
+			\textbf{Gene Symbol} & \textbf{Frequency (\%)} & \textbf{Gene Symbol} & \textbf{Frequency (\%)} \\ 
+			\midrule
+			ISL2       & 100 & REL         & 90 \\
+			MME (CD10) & 100 & BCL6        & 89 \\
+			BBOX1-AS1  & 98  & PHACTR2-AS1 & 89 \\
+			ZBTB32     & 98  & DIP2C       & 88 \\
+			MIR631     & 97  & GRIK1-AS2   & 88 \\
+			NLRP7      & 97  & BLNK        & 86 \\
+			FNDC3A     & 96  & SSBP2       & 86 \\
+			TNFRSF13B  & 92  & SSBP3       & 86 \\
+			ANK1       & 91  & ITPKB       & 83 \\
+			STAG3      & 83  & TEX9        & 83 \\ 
+			\bottomrule
+		\end{tabular}
+	}
+\end{table}
+
+\section{Methodological Appendix}
+\label{app:methodology}
+
+\subsection{Macro-Epidemiological Modeling}
+Standard survival analysis techniques, such as the Kaplan-Meier estimator and the standard Cox Proportional Hazards model, operate under the strict assumption of independent right-censoring, with the baseline hazard function for an individual $i$ conventionally defined as \cite{Cox1972} $$h_i(t) = h_0(t) \exp(\beta^T X_i).$$ However, in real-world oncology, non-cancer-related mortality acts as a ``competing risk'' that permanently precludes the event of interest from ever occurring. Treating such terminal events as standard right-censoring fundamentally violates the assumption of independent censoring, mathematically forcing the model to assume that deceased patients could still develop a secondary malignancy if they had lived \cite{Dignam2012, Austin2016}.
+
+To overcome this mathematical artifact, our methodological framework implemented a dual competing-risk architecture. First, to address the purely biological question of etiology—such as isolating the direct mutagenic hazard of systemic chemotherapy—we modeled the cause-specific hazard $h_{cs}(t)$ \cite{Andersen2012}. Within this specific framework, competing deaths are treated as independent censoring events, allowing the model to accurately estimate the pure biological rate of sNHL occurrence exclusively among patients who remain alive and at risk. 
+
+Conversely, for clinical prediction and the empirical estimation of the cumulative incidence function (CIF), we transitioned to the Fine-Gray subdistribution hazard model \cite{Fine1999}. Rather than artificially removing deceased patients from the risk set, the Fine-Gray model computes a subdistribution hazard $\gamma(t)$:
+\begin{equation*}
+	\begin{split}
+		\gamma(t) = \lim_{\Delta t \to 0} \frac{1}{\Delta t} \mathbb{P} \big( &t \le T \le t+\Delta t,\ J=1 \\
+		&\mid T > t \cup (T \le t \cap J \neq 1) \big)
+	\end{split},
+\end{equation*}
+where $T$ represents the time to the first event and $J$ indicates the specific event type. By conditioning the denominator on $T > t \cup (T \le t \cap J \neq 1)$, this equation mathematically retains patients who have already experienced a competing death ($J \neq 1$) within the risk set, assigning them a highly discounted, zero-risk weight. This algorithmic shift ensures a real-world estimation of the true sNHL cumulative incidence, free from the upward bias of standard Kaplan-Meier estimators.
+
+\subsection{Unsupervised Phenotyping}
+
+\subsubsection{K-Medoids and the Silhouette Statistic}
+To partition the patient cohort into latent phenotypes, we relied on the K-medoids algorithm (Partitioning Around Medoids, PAM). Unlike K-means, which minimizes squared Euclidean distances to artificial centroids, K-medoids is highly robust to outliers as it minimizes the objective function:
+$$ W(C) = \sum_{k=1}^K \sum_{x_i \in C_k} d(x_i, m_k), $$
+where $m_k$ is an actual data point serving as the strictly observed cluster center (medoid), and $d$ represents the chosen dissimilarity metric \cite{Kaufman1990}. 
+
+The number of latent clusters ($K=11$) was chosen mediating the Silhouette statistic \cite{Rousseeuw1987} and model complexity. For each observation $i$, the Silhouette width is defined as:
+$$ s(i) = \frac{b(i) - a(i)}{\max(a(i), b(i))}, $$
+where $a(i)$ is the mean intra-cluster distance and $b(i)$ is the mean distance to the nearest neighboring cluster.
+
+\subsubsection{Topological Reference Frame for Imputed Clustering}
+While standard clustering can partition static datasets, clustering datasets generated by MICE, with $m=5$, introduces the ``label switching'' problem. Unsupervised algorithms lack temporal memory: Cluster 1 in imputation $m=1$ might arbitrarily correspond to Cluster 3 in $m=2$. If fed into Rubin's rules, pooled variances collapse. To prevent this, we established a topological reference frame.
+
+First, to appropriately process our highly heterogeneous clinical feature space, which comprises both continuous (e.g., age) and categorical (e.g., sex, stage, and therapy) variables, we performed Factor Analysis of Mixed Data (FAMD) strictly on the $m=1$ dataset. The necessity of integrating continuous and qualitative variables in lower-dimensional topologies builds upon the foundational paradigm of sufficient dimension reduction with categorical predictors, which establishes that complex feature spaces can yield unconfounded geometric projections without loss of structural information \cite{Chiaromonte2002}. In this specific operational context, FAMD serves as a principal component method that mathematically unifies Principal Component Analysis for quantitative variables and Multiple Correspondence Analysis for qualitative ones \cite{Pages2004}. By standardizing continuous variables to unit variance and transforming categorical variables into a disjunctive data matrix weighted by their marginal frequencies, FAMD ensures that both data types contribute symmetrically to the construction of the principal dimensions. From this unbiased geometric projection, we extracted the orthogonal coordinate space $\mathcal{S}$ and subsequently derived the $K$ medoids $\{m_1, \dots, m_K\}$ through the PAM algorithm.
+
+Then, for any patient $x_i$ in subsequent imputations ($m \in \{2, \dots, 5\}$), their cluster assignment $C(x_i)$ was determined via Euclidean projection onto the fixed $m=1$ space:$$ C(x_i) = \arg\min_{k} \| P_{\mathcal{S}}(x_i) - c_k \|_2, $$ where $P_{\mathcal{S}}$ is the projection operator. This mathematically preserves Rubin’s between-imputation variance without algorithmic confusion.
+
+\subsection{Micro-Genomic Inference}
+In the microarray dataset (GSE31312), the feature space $p \approx 50,000$ vastly exceeds the sample size $n\approx500$. Standard Ordinary Least Squares or unpenalized Logistic Regression cannot be computed because the design matrix $X$ is not full rank, leading to infinite solutions.
+
+\subsubsection{K-NN Imputation}
+To handle missing transcriptomic probes without indiscriminately dropping valuable clinical samples, we applied a K-NN algorithm. For a target sample $x_i$ with a missing value in gene $j$, the algorithm identifies the $k$ closest samples $\mathcal{N}_k(x_i)$ based on the Euclidean distance computed over the observed dimensions: $$d(x_i, x_l) = \sqrt{\sum_{h \neq j} (x_{i,h} - x_{l,h})^2}.$$ The missing value is inferred via a distance-weighted average:$$ \hat{x}_{i,j} = \frac{\sum\limits_{l \in \mathcal{N}_k} w_{i,l} x_{l,j}}{\sum\limits_{l \in \mathcal{N}_k} w_{i,l}}, $$where $w_{i,l} = 1 / d(x_i, x_l)$. To strictly prevent data leakage, this manifold was computed exclusively within the training set boundary.
+
+\subsubsection{Nested SIS}
+We utilized SIS \cite{Fan2008} to reduce dimensionality prior to penalization. Let $\mathbf{X} \in \mathbb{R}^{n \times p}$ be the standardized design matrix and $\mathbf{y}$ the response vector. SIS computes the marginal correlation vector $\boldsymbol{\omega} = \mathbf X^T \mathbf{y}$. The features are sorted by their magnitude $|\boldsymbol{\omega}_j|$, and we define the selected submodel $\mathcal{M}_d$ as:
+$$ \mathcal{M}_d = \left\{ 1 \le j \le p : |\boldsymbol{\omega}_j| \text{ is among the first } d \text{ largest} \right\} $$
+where $d = \lfloor n/\log(n) \rfloor$. Under proper regularity assumptions, SIS satisfies the sure screening property, guaranteeing that the true sparse model $\mathcal{M}_*$ is retained with high probability: $$\mathbb{P}(\mathcal{M}_* \subseteq \mathcal{M}_d) \underset{n\rightarrow+\infty}{\longrightarrow} 1.$$ 
+
+However, standard SIS is highly susceptible to data perturbation. We mitigated this by embedding the SIS procedure within a stability selection pipeline made of $B=100$ subsampling iterations \cite{Meinshausen2010}: a gene was retained only if its selection probability $\Pi_j \ge 0.5$, ensuring biological reliability
+
+\subsubsection{Elastic Net Regularization and the Youden Index}
+Stability-selected features were subsequently modeled using the Elastic Net penalty \cite{Zou2005}. While the Lasso ($L_1$) performs variable selection, it arbitrarily selects only one variable from a group of highly correlated genes. Conversely, Ridge ($L_2$) handles collinearity but fails to provide a sparse solution. The Elastic Net resolves this by optimizing$$ \hat{\boldsymbol{\beta}} = \arg\min_{\boldsymbol{\beta}} \left( ||\mathbf{y} - \mathbf{X}\boldsymbol{\beta}||_2^2 + \lambda_1 \|\boldsymbol{\beta}\|_1 + \lambda_2\|\boldsymbol{\beta}\|_2^2 \right). $$
+By setting $\lambda_1 = 0.5\lambda,\ \lambda_2=0.25\lambda,\ \lambda>0$ (chosen via cross-validation), we leverage the $L_1$ norm for biological sparsity while utilizing the $L_2$ norm to retain entire groups of correlated genes. 
+
+To translate the continuous predicted probabilities from the Elastic Net into binary clinical phenotypes (aggressive vs indolent), we mathematically optimized the decision threshold by maximizing the Youden Index ($J$) on the internal ROC curve:$$ J = \text{Sensitivity} + \text{Specificity} - 1.$$ This ensures the optimal operating point that balances false positive and false negative misclassification errors.
+
+\subsection{Orthogonal Empirical Bayes Harmonization (ComBat)}
+Standardizing microarray data via simple Z-score normalization ($\mu=0, \sigma^2=1$) is mathematically insufficient for cross-cohort external validation. Simple global standardization fundamentally fails to capture and correct the complex, systematic location and scale shifts induced by different sequencing platforms, reagent batches, or laboratory environments \cite{Leek2010}. To overcome this critical bottleneck, we employed ComBat \cite{Johnson2007}, an Empirical Bayes framework that models the expression $Y_{i,j,g}$ as:$$ Y_{i,j,g} = \alpha_g + X \beta_g + \gamma_{i,g} + \delta_{i,g}\epsilon_{i,j,g}, $$where $\gamma_{i,g}$ and $\delta_{i,g}$ represent the additive and multiplicative batch effects. By using Empirical Bayes, the algorithm shrinks batch effect parameters toward the overall mean. Crucially, by setting the training set as the immutable \texttt{ref.batch}, we enforced an orthogonal projection of the external data into the training space, strictly preventing data leakage.
+
+\subsection{GSEA vs ORA}
+Standard Over-Representation Analysis (ORA) requires an arbitrary statistical cutoff (e.g., $p < 0.05$) to define a signature, aggressively discarding moderate but coordinated biological signals \cite{Khatri2012}. Instead, GSEA \cite{Subramanian2005} ranks the entire transcriptome $L = \{g_1, \dots, g_N\}$ by their correlation with the aggressive phenotype. For a pathway $S$, GSEA computes an Enrichment Score by walking down the ranked list, increasing a running-sum statistic when a gene belongs to $S$ and decreasing it otherwise. This threshold-free mathematical approach is superior for capturing microenvironmental shifts involving entire complexes of genes moving in concert.
+
+\begin{figure*}[t]
+	\centering
+	\begin{tikzpicture}[
+		node distance=1.5cm,
+		box/.style={rectangle, draw, rounded corners, minimum width=6cm, minimum height=1cm, align=center, thick},
+		smallbox/.style={rectangle, draw, rounded corners, minimum width=4.5cm, minimum height=1cm, align=center, thick},
+		arrow/.style={-{Stealth[scale=1.2]}, thick}
+		]
+		% Nodes
+		\node (raw) [box] {Raw SEER Registry Extraction\\ \textbf{$N = \num{9187720}$}};
+		\node (prim) [box, below=1.5cm of raw] {Primary Hodgkin Lymphoma\\(1st Primary Malignancy Only)\\ \textbf{$N = \num{45739}$}};
+		\path (raw) -- (prim) coordinate[midway] (mid1);
+		\node (excl1) [box, right=3.5cm of mid1, text width=4cm] {\textbf{Excluded\\ $N = \num{9141981}$:}\\Non-primary HL or\\prior malignancies};
+		
+		\node (follow) [box, below=1.5cm of prim] {Patients with valid follow-up data\\ \textbf{$N = \num{45530}$}};
+		\path (prim) -- (follow) coordinate[midway] (mid2);
+		\node (excl2) [box, right=3.5cm of mid2, text width=4cm] {\textbf{Excluded (N = 209):}\\Missing/Unknown\\Survival Months};
+		
+		\node (final) [box, below=1.5cm of follow, fill=gray!10] {\textbf{Final Macro-Epidemiological Cohort}\\ \textbf{$N = \num{45530}$}};
+		
+		% Bottom Row
+		\node (snhl) [smallbox, below=1.5cm of final, text width=3.5cm] {Secondary NHL\\ \textbf{$n = \num{666}$}};
+		\node (cens) [smallbox, left=0.5cm of snhl, text width=3.5cm] {Censored (No Event)\\ \textbf{$n = \num{34935}$}};
+		\node (death) [smallbox, right=0.5cm of snhl, text width=3.5cm] {Competing Death\\ \textbf{$n = \num{9929}$}};
+		
+		% Arrows
+		\draw [arrow] (raw) -- (prim);
+		\draw [arrow] (mid1) -- (excl1);
+		\draw [arrow] (prim) -- (follow);
+		\draw [arrow] (mid2) -- (excl2);
+		\draw [arrow] (follow) -- (final);
+		
+		\draw [arrow] (final.south) -- ++(0,-0.75) -| (cens.north);
+		\draw [arrow] (final.south) -- (snhl.north);
+		\draw [arrow] (final.south) -- ++(0,-0.75) -| (death.north);
+	\end{tikzpicture}
+	\caption{STROBE Flow Diagram for the SEER Macro-Epidemiological Cohort Selection.}
+	\label{fig:flow_seer}
+\end{figure*}
+
+\begin{figure*}[t]
+	\centering
+	\begin{tikzpicture}[
+		node distance=1.5cm,
+		box/.style={rectangle, draw, rounded corners, minimum width=6cm, minimum height=1cm, align=center, thick},
+		arrow/.style={-{Stealth[scale=1.2]}, thick}
+		]
+		% Primary Cohort Nodes
+		\node (geo1) [box] {Primary Cohort: GSE31312\\ \textbf{$N = \num{498}$}};
+		\node (geo1filt) [box, below=1.5cm of geo1] {Valid Phenotypes (ABC/GCB)\\ \textbf{$N = \num{497}$}};
+		\path (geo1) -- (geo1filt) coordinate[midway] (midgeo1);
+		\node (geo1excl) [box, right=3.5cm of midgeo1, text width=4.5cm] {\textbf{Excluded $N = \num{1}$:}\\Unclassified or missing\\cell-of-origin labels};
+		
+		\node (train) [box, below=1.5cm of geo1filt, xshift=-3.5cm, fill=gray!10] {\textbf{Global Training Set (80\%)}\\ \textbf{$n = \num{398}$}};
+		\node (test) [box, below=1.5cm of geo1filt, xshift=3.5cm, fill=gray!10] {\textbf{Internal Hold-Out (20\%)}\\ \textbf{$n = \num{99}$}};
+		
+		% External Validation Nodes (Centered securely under geo1filt)
+		\node (geo2) [box, below=4cm of geo1filt] {External Cohort: GSE10846\\ \textbf{$N = \num{420}$}};
+		\node (geo2filt) [box, below=1.5cm of geo2] {Valid Phenotypes (ABC/GCB)\\ \textbf{$N = \num{350}$}};
+		\path (geo2) -- (geo2filt) coordinate[midway] (midgeo2);
+		\node (geo2excl) [box, right=3.5cm of midgeo2, text width=4cm] {\textbf{Excluded $N = \num{70}$:}\\Unclassified labels};
+		\node (extval) [box, below=1.5cm of geo2filt, fill=gray!10] {\textbf{External Validation Set}\\ \textbf{$n = \num{350}$}};
+		
+		% Arrows Primary
+		\draw [arrow] (geo1) -- (geo1filt);
+		\draw [arrow] (midgeo1) -- (geo1excl);
+		\draw [arrow] (geo1filt.south) -- ++(0,-0.75) -| (train.north);
+		\draw [arrow] (geo1filt.south) -- ++(0,-0.75) -| (test.north);
+		
+		% Arrows External
+		\draw [arrow] (geo2) -- (geo2filt);
+		\draw [arrow] (midgeo2) -- (geo2excl);
+		\draw [arrow] (geo2filt) -- (extval);
+	\end{tikzpicture}
+	\caption{REMARK Flow Diagram for Transcriptomic Cohort Selection, Partitioning, and External Validation.}
+	\label{fig:flow_geo}
+\end{figure*}
+	
+\end{document}

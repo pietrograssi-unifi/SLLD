@@ -95,6 +95,9 @@ Y_Factor_test <- Y_Factor[-train_idx_global]
 X_genes <- rbind(X_train_global, X_test_internal)
 X_raw <- X_genes
 
+Y_Etiology_reordered <- c(Y_train_global, Y_test_internal)
+Y_Factor_reordered <- as.factor(ifelse(Y_Etiology_reordered == 1, "ABC_Aggressive", "GCB_Indolent"))
+
 cat("Data Ingestion Complete | Samples (n):", nrow(X_genes), "| Mapped Features (p):", ncol(X_genes), "\n")
 
 # ==============================================================================
@@ -156,31 +159,44 @@ cat("\nStability Selection isolated a robust Core Signature of", length(core_gen
 # PHASE 3: GENE SET ENRICHMENT ANALYSIS (GSEA)
 # Rationale: Moving beyond weak ORA by ranking the entire transcriptome based 
 # on marginal correlation with etiology to identify systemic biological shifts.
+# This prevents extreme FDR penalties on truncated signatures.
 # ==============================================================================
 cat("\n[PHASE 3] Executing Gene Set Enrichment Analysis (GSEA)...\n")
 
-Y_num <- as.numeric(Y_train_global) - 1
-global_cor <- apply(X_train_global, 2, function(x) cor(x, Y_num, use="pairwise.complete.obs"))
+global_cor <- apply(X_train_global, 2, function(x) cor(x, Y_train_global, use="pairwise.complete.obs"))
 global_cor[is.na(global_cor)] <- 0
 
 gene_list <- sort(global_cor, decreasing = TRUE)
-names(gene_list) <- gsub("\\.[0-9]+$", "", names(gene_list)) # Pulizia nomi
+
+names(gene_list) <- gsub("\\.[0-9]+$", "", names(gene_list))
+
+df_genes <- data.frame(gene = names(gene_list), cor = gene_list)
+df_genes <- df_genes[!duplicated(df_genes$gene), ]
+
+gene_list_clean <- df_genes$cor
+names(gene_list_clean) <- df_genes$gene
 
 set.seed(2026)
 gsea_res <- tryCatch({
-  gseGO(geneList      = gene_list,
+  gseGO(geneList      = gene_list_clean,
         OrgDb         = org.Hs.eg.db,
         keyType       = "SYMBOL",
         ont           = "BP",
-        pAdjustMethod = "BH",
+        minGSSize     = 15,
+        maxGSSize     = 500,
         pvalueCutoff  = 0.05,
-        eps           = 1e-10)
+        pAdjustMethod = "BH",
+        eps           = 0,
+        nPermSimple   = 10000)
 }, error = function(e) { NULL })
 
 if(!is.null(gsea_res) && nrow(gsea_res@result) > 0) {
   cat("Successfully executed GSEA: Identified active systemic pathways.\n")
-  p_pathway <- dotplot(gsea_res, showCategory = 10, title = "Gene Set Enrichment Analysis (GSEA)\nAggressive vs Indolent Phonotypes") + 
-    theme_minimal(base_size = 12) + theme(plot.title = element_text(face = "bold"))
+  p_pathway <- dotplot(gsea_res, showCategory = 8, split = ".sign") + 
+    facet_grid(.~.sign) +
+    theme_minimal(base_size = 12) + 
+    theme(plot.title = element_text(face = "bold"))
+  
 } else {
   cat("[LOG] No significant GSEA pathways detected.\n")
   p_pathway <- ggplot() + annotate("text", x=0, y=0, label="No Significant Pathways Found") + theme_void()
@@ -197,11 +213,17 @@ cat("\n[PHASE 4] Generating Dimension Reduction Projections...\n")
 X_signature_global <- X_genes[, core_genes, drop = FALSE]
 pca_res <- prcomp(X_signature_global, scale. = TRUE)
 
-pca_scores <- data.frame(Etiology = Y_Factor, PC1 = pca_res$x[,1], PC2 = pca_res$x[,2])
+pca_scores <- data.frame(Etiology = Y_Factor_reordered, PC1 = pca_res$x[,1], PC2 = pca_res$x[,2])
+
 p_pca <- ggplot(pca_scores, aes(x = PC1, y = PC2, color = Etiology)) +
   geom_point(size = 3, alpha = 0.8) + stat_ellipse(level = 0.95) +
-  scale_color_manual(values = c("GCB_Indolent" = "#0073C2FF", "ABC_Aggressive" = "#EFC000FF")) +
-  theme_minimal() + labs(title = "Unsupervised PCA", subtitle = "Natural variance mapping")
+  scale_color_manual(
+    name = "Transcriptomic Phenotype", 
+    values = c("GCB_Indolent" = "#0073C2FF", "ABC_Aggressive" = "#EFC000FF"),
+    labels = c("Aggressive (ABC-like)", "Indolent (GCB-like)")
+  ) +
+  theme_minimal(base_size = 14) + 
+  labs(title = NULL, subtitle = NULL)
 
 # ==============================================================================
 # PHASE 5: STRICT INTERNAL VALIDATION (ON HOLD-OUT SET) & YOUDEN THRESHOLD
@@ -290,20 +312,36 @@ dir.create(out_dir, showWarnings = FALSE)
 ggsave(paste0(out_dir, "/Figure1_Unsupervised_PCA.pdf"), plot = p_pca, width = 8, height = 6, dpi = 300)
 
 # Figure 2: Hierarchical Clustering Heatmap
-annotation_col <- data.frame(Etiology = Y_Factor)
+
+Clean_Phenotype <- as.character(Y_Factor_reordered)
+Clean_Phenotype[Clean_Phenotype == "ABC_Aggressive"] <- "ABC (Aggressive)"
+Clean_Phenotype[Clean_Phenotype == "GCB_Indolent"] <- "GCB (Indolent)"
+
+annotation_col <- data.frame(Phenotype = factor(Clean_Phenotype, levels = c("ABC (Aggressive)", "GCB (Indolent)")))
 rownames(annotation_col) <- rownames(X_signature_global)
-pheatmap(t(X_signature_global), annotation_col = annotation_col, scale = "row", show_colnames = FALSE, 
-         clustering_method = "ward.D2", main = "Unsupervised Hierarchical Clustering of the Core Stable Signature",
-         filename = paste0(out_dir, "/Figure2_Genomic_Heatmap.pdf"), width = 8, height = 6)
+
+ann_colors <- list(
+  Phenotype = c("ABC (Aggressive)" = "#EFC000FF", "GCB (Indolent)" = "#0073C2FF")
+)
+
+pheatmap(t(X_signature_global), 
+         annotation_col = annotation_col, 
+         annotation_colors = ann_colors,
+         scale = "row", 
+         show_colnames = FALSE, 
+         clustering_method = "ward.D2",
+         main = "",                 
+         fontsize_row = 6,          
+         filename = paste0(out_dir, "/Figure2_Genomic_Heatmap.pdf"), 
+         width = 8, 
+         height = 12)
 
 # Figure 3: ROC Analytics
 true_auc <- as.numeric(auc(roc_obj))
 fig3 <- ggroc(roc_obj, colour = "#EFC000FF", size = 1.2) +
   geom_abline(slope = 1, intercept = 1, linetype = "dashed", color = "darkgray") +
   theme_minimal(base_size = 14) +
-  labs(title = "Diagnostic Performance of the Stable Genomic Signature",
-       subtitle = paste("AUC =", round(true_auc, 3), "| Optimal Youden Threshold =", round(best_thresh, 3)),
-       x = "Specificity", y = "Sensitivity")
+  labs(x = "Specificity", y = "Sensitivity")
 ggsave(paste0(out_dir, "/Figure3_ROC_Curve.pdf"), plot = fig3, width = 7, height = 7, dpi = 300)
 
 # Figure 4: Pathway Analysis
@@ -313,9 +351,7 @@ ggsave(paste0(out_dir, "/Figure4_Pathway_Enrichment.pdf"), plot = p_pathway, wid
 fig5 <- ggroc(roc_ext, colour = "#27ae60", size = 1.2) +
   geom_abline(slope = 1, intercept = 1, linetype = "dashed", color = "darkgray") +
   theme_minimal(base_size = 14) +
-  labs(title = "External Validation of the Genomic Signature (GSE10846)",
-       subtitle = paste("Independent Cohort AUC =", round(auc_ext, 3)),
-       x = "Specificity", y = "Sensitivity")
+  labs(x = "Specificity", y = "Sensitivity")
 ggsave(paste0(out_dir, "/Figure5_External_Validation_ROC.pdf"), plot = fig5, width = 7, height = 7, dpi = 300)
 
 # Table 1: Stable Signature Extraction
@@ -330,3 +366,11 @@ write.csv(as.data.frame(df_reclass), paste0(out_dir, "/Table2_Clinical_Reclassif
 
 cat("\n[SUCCESS] All analytical outputs rigorously exported.\n")
 # ==============================================================================
+
+cat("GSE31312 Raw Samples:", length(patient_metadata), "\n")
+cat("GSE31312 Valid ABC/GCB:", sum(valid_patients), "\n")
+cat("GSE31312 Train (80%):", length(train_idx_global), "\n")
+cat("GSE31312 Hold-out (20%):", sum(valid_patients) - length(train_idx_global), "\n")
+
+cat("GSE10846 Raw Samples:", length(meta_ext), "\n")
+cat("GSE10846 Valid ABC/GCB:", sum(valid_ext), "\n")
