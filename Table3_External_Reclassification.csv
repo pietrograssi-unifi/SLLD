@@ -1,0 +1,5 @@
+"True_Clinical_Label","Predicted_Genomic_Label","Freq"
+"AITL","AITL",13
+"PTCL-NOS","AITL",49
+"AITL","PTCL-NOS",2
+"PTCL-NOS","PTCL-NOS",129
